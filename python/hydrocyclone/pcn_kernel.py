@@ -1,6 +1,7 @@
 import bayesian_pdes as bpdes
 import numpy as np
 from scipy import stats
+import mcmc
 
 
 def theta_to_a(theta, sz_int, sz_bdy, proposal_dot_mat):
@@ -73,3 +74,30 @@ def phi(grid, op_system, theta, likelihood_variance, pattern, data, collocate_ar
             print("Likelihood: {}   |   Residual: {}".format(this_likelihood, np.abs(residual).sum()))
         likelihood += this_likelihood
     return -likelihood
+
+class PCNKernel(object):
+    def __init__(self, proposal, grid, op_system, likelihood_variance, pattern, data, collocate_args, proposal_dot_mat):
+        self.__proposal__ = proposal   
+        self.__grid__ = grid
+        self.__op_system__ = op_system
+        self.__likelihood_variance__ = likelihood_variance
+        self.__pattern__ = pattern
+        self.__data__ = data
+        self.__collocate_args__ = collocate_args
+        self.__proposal_dot_mat__ = proposal_dot_mat
+
+    def phi(self, theta, debug=False):
+        return phi(
+            self.__grid__,
+            self.__op_system__,
+            theta,
+            self.__likelihood_variance__,
+            self.__pattern__,
+            self.__data__,
+            self.__collocate_args__,
+            self.__proposal_dot_mat__,
+            debug
+        )
+
+    def apply_pcn(self, kappa_0, n_iter):
+        return mcmc.pCN(n_iter, self.__proposal__, self.phi, kappa_0)
