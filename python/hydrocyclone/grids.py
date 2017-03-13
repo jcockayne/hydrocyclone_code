@@ -35,15 +35,15 @@ class EITGrid(object):
 
 	@property
 	def interior_plus_boundary(self):
-		return np.row_stack([self.__interior__, self.boundary])
+		return np.row_stack([self.interior, self.boundary])
 
 	@property
 	def full_boundary(self):
-		return np.row_stack([self.sensors, self.boundary])
+		return np.row_stack([self.boundary, self.sensors])
 
 	@property
 	def all(self):
-		return np.row_stack([self.full_boundary, self.interior])
+		return np.row_stack([self.interior, self.boundary, self.sensors])
 
 
 def construct_shell(radii):
