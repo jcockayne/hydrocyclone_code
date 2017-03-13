@@ -38,7 +38,6 @@ def construct_posterior(grid, op_system, theta, collocate_args, proposal_dot_mat
     )
     return posterior
 
-
 def phi(grid, op_system, theta, likelihood_variance, pattern, data, collocate_args, proposal_dot_mat, debug=False):
     # first solve forward
     design_int = grid.interior_plus_boundary
@@ -99,5 +98,16 @@ class PCNKernel(object):
             debug
         )
 
-    def apply_pcn(self, kappa_0, n_iter):
-        return mcmc.pCN(n_iter, self.__proposal__, self.phi, kappa_0)
+    def apply(self, kappa_0, n_iter):
+        if len(kappa_0.shape) == 1 or kappa_0.shape[1] == 1:
+            return mcmc.pCN(n_iter, self.__proposal__, self.phi, kappa_0)
+
+        # apply the kernel to each row of kappa_0
+        # TODO: currently this kernel parallelises in the matrix mults - difficult to parallelise the for loop as a result
+        ret = np.empty_like(kappa_0)
+        acceptances = np.empty(kappa_0.shape[0])
+        for i in xrange(kappa_0.shape[0]):
+            results, accepts = self.apply(kappa_0[i], n_iter)
+            ret[i] = results[-1,:]
+            acceptances[i] = accepts.mean()
+        return ret, acceptances
