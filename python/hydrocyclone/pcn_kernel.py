@@ -2,6 +2,7 @@ import bayesian_pdes as bpdes
 import numpy as np
 from scipy import stats
 import mcmc
+import collocate
 
 
 def theta_to_a(theta, sz_int, sz_bdy, proposal_dot_mat):
@@ -38,14 +39,38 @@ def construct_posterior(grid, op_system, theta, collocate_args, proposal_dot_mat
     )
     return posterior
 
-def phi(grid, op_system, theta, likelihood_variance, pattern, data, collocate_args, proposal_dot_mat, debug=False):
+def construct_c_posterior(locations, grid, theta, collocate_args, proposal_dot_mat, debug=False):
+    design_int = grid.interior_plus_boundary
+    a_int, a_bdy, a_x, a_y = theta_to_a(theta,
+                                        design_int.shape[0],
+                                        grid.sensors.shape[0],
+                                        proposal_dot_mat
+                                        )
+
+    augmented_int = np.column_stack([design_int, a_int, a_x, a_y])
+    augmented_bdy = np.column_stack([grid.sensors, a_bdy, np.nan * np.zeros((a_bdy.shape[0], 2))])
+    mu_mult, Sigma = collocate.collocate_no_obs(
+        np.asfortranarray(locations),
+        np.asfortranarray(augmented_int),
+        np.asfortranarray(augmented_bdy),
+        np.asfortranarray(collocate_args)
+    )
+    return mu_mult, Sigma
+
+def phi(grid, op_system, theta, likelihood_variance, pattern, data, collocate_args, proposal_dot_mat, use_c=False, debug=False):
     # first solve forward
     design_int = grid.interior_plus_boundary
-    posterior = construct_posterior(grid, op_system, theta, collocate_args, proposal_dot_mat, debug=debug)
     # now determine voltage at the sensor locations
     # we have seven observations so take one for each sensor other than sensor 1, the reference sensor
     augmented_locations = np.column_stack([grid.sensors, np.nan * np.zeros((8, 3))])
-    mu_mult, Sigma = posterior.no_obs_posterior(augmented_locations)
+
+    if use_c:
+        mu_mult, Sigma = construct_c_posterior(augmented_locations, grid, theta, collocate_args, proposal_dot_mat, debug=debug)
+    else:
+        posterior = construct_posterior(grid, op_system, theta, collocate_args, proposal_dot_mat, debug=debug)
+        mu_mult, Sigma = posterior.no_obs_posterior(augmented_locations)
+
+    
 
     # now need to iterate the stim patterns and compute the residual
     rhs_int = np.zeros((len(design_int), 1))
@@ -75,7 +100,7 @@ def phi(grid, op_system, theta, likelihood_variance, pattern, data, collocate_ar
     return -likelihood
 
 class PCNKernel(object):
-    def __init__(self, proposal, grid, op_system, likelihood_variance, pattern, data, collocate_args, proposal_dot_mat):
+    def __init__(self, proposal, grid, op_system, likelihood_variance, pattern, data, collocate_args, proposal_dot_mat, use_c=False):
         self.__proposal__ = proposal   
         self.__grid__ = grid
         self.__op_system__ = op_system
@@ -84,6 +109,7 @@ class PCNKernel(object):
         self.__data__ = data
         self.__collocate_args__ = collocate_args
         self.__proposal_dot_mat__ = proposal_dot_mat
+        self.__use_c__ = use_c
 
     def phi(self, theta, debug=False):
         return phi(
@@ -95,7 +121,8 @@ class PCNKernel(object):
             self.__data__,
             self.__collocate_args__,
             self.__proposal_dot_mat__,
-            debug
+            use_c = self.__use_c__,
+            debug=debug
         )
 
     def apply(self, kappa_0, n_iter):

@@ -7,7 +7,7 @@ Eigen::MatrixXd Id_Id(const Eigen::Ref<const Eigen::MatrixXd> &xarg, const Eigen
     return ret;
 }
 
-void Id_Id(const Eigen::Ref<const Eigen::MatrixXd> &xarg, const Eigen::Ref<const Eigen::MatrixXd> &yarg, const Eigen::Ref<const Eigen::VectorXd> &args, Eigen::MatrixXd &ret) {
+void Id_Id(const Eigen::Ref<const Eigen::MatrixXd> &xarg, const Eigen::Ref<const Eigen::MatrixXd> &yarg, const Eigen::Ref<const Eigen::VectorXd> &args, Eigen::Ref<Eigen::MatrixXd> ret) {
     double l = args(0);
     double sigma = args(1);
 
@@ -43,7 +43,7 @@ Eigen::MatrixXd Id_A(const Eigen::Ref<const Eigen::MatrixXd> &xarg, const Eigen:
     return ret;
 }
 
-void Id_A(const Eigen::Ref<const Eigen::MatrixXd> &xarg, const Eigen::Ref<const Eigen::MatrixXd> &yarg, const Eigen::Ref<const Eigen::VectorXd> &args, Eigen::MatrixXd &ret) {
+void Id_A(const Eigen::Ref<const Eigen::MatrixXd> &xarg, const Eigen::Ref<const Eigen::MatrixXd> &yarg, const Eigen::Ref<const Eigen::VectorXd> &args, Eigen::Ref<Eigen::MatrixXd> ret) {
     double l = args(0);
     double sigma = args(1);
 
@@ -82,7 +82,7 @@ Eigen::MatrixXd Id_B(const Eigen::Ref<const Eigen::MatrixXd> &xarg, const Eigen:
     return ret;
 }
 
-void Id_B(const Eigen::Ref<const Eigen::MatrixXd> &xarg, const Eigen::Ref<const Eigen::MatrixXd> &yarg, const Eigen::Ref<const Eigen::VectorXd> &args, Eigen::MatrixXd &ret) {
+void Id_B(const Eigen::Ref<const Eigen::MatrixXd> &xarg, const Eigen::Ref<const Eigen::MatrixXd> &yarg, const Eigen::Ref<const Eigen::VectorXd> &args, Eigen::Ref<Eigen::MatrixXd> ret) {
     double l = args(0);
     double sigma = args(1);
 
@@ -121,7 +121,7 @@ Eigen::MatrixXd A_A(const Eigen::Ref<const Eigen::MatrixXd> &xarg, const Eigen::
     return ret;
 }
 
-void A_A(const Eigen::Ref<const Eigen::MatrixXd> &xarg, const Eigen::Ref<const Eigen::MatrixXd> &yarg, const Eigen::Ref<const Eigen::VectorXd> &args, Eigen::MatrixXd &ret) {
+void A_A(const Eigen::Ref<const Eigen::MatrixXd> &xarg, const Eigen::Ref<const Eigen::MatrixXd> &yarg, const Eigen::Ref<const Eigen::VectorXd> &args, Eigen::Ref<Eigen::MatrixXd> ret) {
     double l = args(0);
     double sigma = args(1);
 
@@ -171,7 +171,7 @@ Eigen::MatrixXd A_B(const Eigen::Ref<const Eigen::MatrixXd> &xarg, const Eigen::
     return ret;
 }
 
-void A_B(const Eigen::Ref<const Eigen::MatrixXd> &xarg, const Eigen::Ref<const Eigen::MatrixXd> &yarg, const Eigen::Ref<const Eigen::VectorXd> &args, Eigen::MatrixXd &ret) {
+void A_B(const Eigen::Ref<const Eigen::MatrixXd> &xarg, const Eigen::Ref<const Eigen::MatrixXd> &yarg, const Eigen::Ref<const Eigen::VectorXd> &args, Eigen::Ref<Eigen::MatrixXd> ret) {
     double l = args(0);
     double sigma = args(1);
 
@@ -245,7 +245,7 @@ Eigen::MatrixXd B_B(const Eigen::Ref<const Eigen::MatrixXd> &xarg, const Eigen::
     return ret;
 }
 
-void B_B(const Eigen::Ref<const Eigen::MatrixXd> &xarg, const Eigen::Ref<const Eigen::MatrixXd> &yarg, const Eigen::Ref<const Eigen::VectorXd> &args, Eigen::MatrixXd &ret) {
+void B_B(const Eigen::Ref<const Eigen::MatrixXd> &xarg, const Eigen::Ref<const Eigen::MatrixXd> &yarg, const Eigen::Ref<const Eigen::VectorXd> &args, Eigen::Ref<Eigen::MatrixXd> ret) {
     double l = args(0);
     double sigma = args(1);
 
