@@ -17,7 +17,8 @@ Eigen::MatrixXd {name} (const Eigen::MatrixXd &xarg, const Eigen::MatrixXd &yarg
 
 assign_template = """double {} = {};"""
 
-# This was originally used to create operators.cpp in the 
+# This was originally used to create operators.cpp in cpp/src 
+# NB this produces highly inefficient code, which was then optimised by hand.
 def construct_cpp_operators(kernel, names, names_bar, ops, ops_bar, symbols):
     extract_args = ""
     extract_x_params = ""
