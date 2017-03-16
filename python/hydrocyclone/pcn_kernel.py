@@ -81,8 +81,7 @@ def phi(grid, op_system, theta, likelihood_variance, pattern, data, collocate_ar
     likelihood_dist = stats.multivariate_normal(np.zeros(Sigma_obs.shape[0]), likelihood_cov)
 
     if debug:
-        print("Sigma diag: {}\tCondition:{} \t Augmented Condition: {}".format(np.diag(Sigma), np.linalg.cond(Sigma),
-                                                                               np.linalg.cond(likelihood_cov)))
+        print likelihood_cov
 
     likelihood = 0
     for voltage, current in zip(data, pattern.stim_pattern):
@@ -94,10 +93,23 @@ def phi(grid, op_system, theta, likelihood_variance, pattern, data, collocate_ar
         residual = voltage.ravel() - model_voltage.ravel()
         this_likelihood = likelihood_dist.logpdf(residual)
         if debug:
-            print("Model|True\n {}".format(np.c_[model_voltage, voltage]))
+            print("Model|True|Residual\n {}".format(np.c_[model_voltage, voltage, residual]))
             print("Likelihood: {}   |   Residual: {}".format(this_likelihood, np.abs(residual).sum()))
         likelihood += this_likelihood
     return -likelihood
+
+def phi_c(grid, theta, likelihood_variance, pattern, data, collocate_args, proposal_dot_mat):
+    return -collocate.log_likelihood(
+        np.asfortranarray(grid.interior_plus_boundary),
+        np.asfortranarray(grid.sensors),
+        np.asfortranarray(theta),
+        np.asfortranarray(proposal_dot_mat),
+        np.asfortranarray(collocate_args),
+        np.asfortranarray(pattern.stim_pattern),
+        np.asfortranarray(pattern.meas_pattern),
+        np.asfortranarray(data),
+        likelihood_variance
+    )
 
 class PCNKernel(object):
     def __init__(self, proposal, grid, op_system, likelihood_variance, pattern, data, collocate_args, proposal_dot_mat, use_c=False):
@@ -112,6 +124,16 @@ class PCNKernel(object):
         self.__use_c__ = use_c
 
     def phi(self, theta, debug=False):
+        if self.__use_c__:
+            return phi_c(
+                self.__grid__,
+                theta,
+                self.__likelihood_variance__,
+                self.__pattern__,
+                self.__data__,
+                self.__collocate_args__,
+                self.__proposal_dot_mat__
+            )
         return phi(
             self.__grid__,
             self.__op_system__,
@@ -121,7 +143,6 @@ class PCNKernel(object):
             self.__data__,
             self.__collocate_args__,
             self.__proposal_dot_mat__,
-            use_c = self.__use_c__,
             debug=debug
         )
 

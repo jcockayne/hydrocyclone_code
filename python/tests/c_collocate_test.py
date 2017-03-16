@@ -3,7 +3,7 @@ import numpy as np
 import hydrocyclone
 import bayesian_pdes as bpdes
 
-def test_c_operators():
+def test_c_collocate():
     s_x, s_xbar, s_y, s_ybar = sp.symbols('x,xbar,y,ybar')
     a, a_x, a_y = sp.symbols('a,a_x,a_y')
     a_bar, a_x_bar, a_y_bar = sp.symbols('abar,a_xbar,a_ybar')
@@ -45,3 +45,29 @@ def test_c_operators():
 
     assert np.abs((mu2-mu) / mu).mean() < 1e-4
     assert np.abs((cov2-cov) / cov).mean() < 1e-4
+
+    # TEST PHI
+    likelihood_variance = 0.01
+    meas_pattern = np.zeros((7,8))
+    meas_pattern[:,0] = 1
+    meas_pattern[:, 1:] = np.diag(-np.ones(7))
+
+    stim_pattern = np.zeros((7,8))
+    stim_current = 1.0
+    for i in xrange(7):
+        stim_pattern[i,0] = 1
+        stim_pattern[i, i+1] = -1
+    stim_pattern = stim_pattern*stim_current
+    pattern = hydrocyclone.grids.EITPattern(meas_pattern, stim_pattern)
+    data = np.array([[ 43.26  ,  22.51  ,  22.06  ,  21.5   ,  21.24  ,  20.08  , 18.6512],
+       [ 23.52  ,  46.35  ,  27.73  ,  26.06  ,  25.08  ,  23.57  , 20.8412],
+       [ 21.69  ,  25.88  ,  34.13  ,  28.65  ,  26.81  ,  25.6   , 22.1812],
+       [ 21.17  ,  24.41  ,  28.41  ,  34.42  ,  27.21  ,  25.5   , 21.6012],
+       [ 20.2   ,  23.72  ,  26.93  ,  26.94  ,  45.77  ,  26.49  , 21.9412],
+       [ 19.62  ,  22.44  ,  25.18  ,  25.    ,  26.09  ,  49.61  , 23.7512],
+       [ 18.41  ,  19.38  ,  21.25  ,  21.29  ,  21.64  ,  22.94  ,  42.46  ]])
+    phi_1 = hydrocyclone.pcn_kernel.phi(grid, op_system, kappa, likelihood_variance, pattern, data, fun_args, proposal_dot_mat)
+    phi_2 = hydrocyclone.pcn_kernel.phi_c(grid, kappa, likelihood_variance, pattern, data, fun_args, proposal_dot_mat)
+
+    print np.abs((phi_1 - phi_2) / phi_2)
+    assert np.abs((phi_1 - phi_2) / phi_2) < 1e-4
