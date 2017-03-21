@@ -55,7 +55,7 @@ setup(
     ext_modules=cythonize([
         Extension('*',
                   ['hydrocyclone/*.pyx'],
-                  extra_objects=['../cpp/lib/libhydrocyclones.a'],
+                  extra_objects=['../cpp/lib/libhydrocyclones.a', '../cpp/lib/libcmcmc.a'],
                   extra_compile_args=["-std=c++11", "-fopenmp"],
                   extra_link_args=['-lgomp'],
                   language='c++'

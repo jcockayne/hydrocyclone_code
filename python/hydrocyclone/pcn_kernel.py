@@ -3,6 +3,7 @@ import numpy as np
 from scipy import stats
 import mcmc
 import collocate
+import simulate
 
 
 def theta_to_a(theta, sz_int, sz_bdy, proposal_dot_mat):
@@ -111,8 +112,50 @@ def phi_c(grid, theta, likelihood_variance, pattern, data, collocate_args, propo
         likelihood_variance
     )
 
+class PCNKernel_C(object):
+    def __init__(self, beta, sqrt_prior_cov, grid, likelihood_variance, pattern, data, collocate_args, proposal_dot_mat):
+        self.__beta__ = beta
+        self.__sqrt_prior_cov__ = sqrt_prior_cov   
+        self.__grid__ = grid
+        self.__likelihood_variance__ = likelihood_variance
+        self.__pattern__ = pattern
+        self.__data__ = data
+        self.__collocate_args__ = collocate_args
+        self.__proposal_dot_mat__ = proposal_dot_mat
+
+    def phi(self, theta, debug=False):
+        return phi_c(
+            self.__grid__,
+            theta,
+            self.__likelihood_variance__,
+            self.__pattern__,
+            self.__data__,
+            self.__collocate_args__,
+            self.__proposal_dot_mat__
+        )
+
+    def apply(self, kappa_0, n_iter, n_threads=1):
+        if len(kappa_0.shape) == 1:
+            kappa_0 = np.copy(kappa_0[None, :])
+        return simulate.run_pcn_parallel(
+            n_iter,
+            self.__beta__,
+            np.asfortranarray(kappa_0),
+            np.asfortranarray(self.__sqrt_prior_cov__),
+            np.asfortranarray(self.__grid__.interior_plus_boundary),
+            np.asfortranarray(self.__grid__.sensors),
+            np.asfortranarray(self.__proposal_dot_mat__),
+            np.asfortranarray(self.__collocate_args__),
+            np.asfortranarray(self.__pattern__.stim_pattern),
+            np.asfortranarray(self.__pattern__.meas_pattern),
+            np.asfortranarray(self.__data__),
+            self.__likelihood_variance__,
+            n_threads
+        )
+
+
 class PCNKernel(object):
-    def __init__(self, proposal, grid, op_system, likelihood_variance, pattern, data, collocate_args, proposal_dot_mat, use_c=False):
+    def __init__(self, proposal, grid, op_system, likelihood_variance, pattern, data, collocate_args, proposal_dot_mat):
         self.__proposal__ = proposal   
         self.__grid__ = grid
         self.__op_system__ = op_system
@@ -121,19 +164,8 @@ class PCNKernel(object):
         self.__data__ = data
         self.__collocate_args__ = collocate_args
         self.__proposal_dot_mat__ = proposal_dot_mat
-        self.__use_c__ = use_c
 
     def phi(self, theta, debug=False):
-        if self.__use_c__:
-            return phi_c(
-                self.__grid__,
-                theta,
-                self.__likelihood_variance__,
-                self.__pattern__,
-                self.__data__,
-                self.__collocate_args__,
-                self.__proposal_dot_mat__
-            )
         return phi(
             self.__grid__,
             self.__op_system__,
@@ -146,7 +178,10 @@ class PCNKernel(object):
             debug=debug
         )
 
-    def apply(self, kappa_0, n_iter):
+    def apply(self, kappa_0, n_iter, n_threads=1):
+        if n_threads > 1:
+            raise Exception("Threading not currently supported in the python kernel.")
+        
         if len(kappa_0.shape) == 1 or kappa_0.shape[1] == 1:
             return mcmc.pCN(n_iter, self.__proposal__, self.phi, kappa_0)
 

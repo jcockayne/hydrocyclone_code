@@ -8,6 +8,9 @@ RelWithDebInfo MinSizeRel."
       FORCE)
 endif(NOT CMAKE_BUILD_TYPE)
 
+option(CMCMC_TESTS "Build tests with CMCMC" OFF)
+add_subdirectory(external/cmcmc)
+
 project (hydrocyclones C CXX)
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
@@ -15,7 +18,7 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/bin)
 
-include_directories(include)
+include_directories(include external/cmcmc/include)
 
 find_package( PkgConfig )
 #find_package( Threads REQUIRED )
@@ -34,4 +37,5 @@ set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DENABLE_LOG_ERROR -DENABLE_
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -DENABLE_LOG_ERROR -DENABLE_LOG_WARN -DENABLE_LOG_INFO")
 
 add_library(hydrocyclones STATIC ${SOURCES})
+target_link_libraries(hydrocyclones cmcmc)
 target_compile_features(hydrocyclones PRIVATE cxx_range_for)
