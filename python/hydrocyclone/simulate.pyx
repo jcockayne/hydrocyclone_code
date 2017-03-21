@@ -7,11 +7,13 @@ from libcpp.memory cimport unique_ptr
 cdef extern from "simulate.hpp":
 	cdef cppclass SimulateResult:
 		MatrixXd samples
+		VectorXd acceptances
 		VectorXd log_likelihoods
 	cdef unique_ptr[SimulateResult] _run_pcn_parallel "run_pcn_parallel"(
 		int n_iter,
 		double beta,
 		Map[MatrixXd] theta_0,
+		Map[VectorXd] prior_mean,
 		Map[MatrixXd] sqrt_prior_cov,
 		Map[MatrixXd] interior,
 		Map[MatrixXd] sensors,
@@ -28,6 +30,7 @@ def run_pcn_parallel(
 	int n_iter,
 	double beta,
 	np.ndarray[ndim=2, dtype=np.float_t] theta_0,
+	np.ndarray[ndim=1, dtype=np.float_t] prior_mean,
 	np.ndarray[ndim=2, dtype=np.float_t] sqrt_prior_cov,
 	np.ndarray[ndim=2, dtype=np.float_t] interior,
 	np.ndarray[ndim=2, dtype=np.float_t] sensors,
@@ -43,6 +46,7 @@ def run_pcn_parallel(
 		n_iter,
 		beta,
 		Map[MatrixXd](theta_0),
+		Map[VectorXd](prior_mean),
 		Map[MatrixXd](sqrt_prior_cov),
 		Map[MatrixXd](interior),
 		Map[MatrixXd](sensors),
@@ -55,4 +59,4 @@ def run_pcn_parallel(
 		n_threads
 	)
 
-	return ndarray_copy(deref(ret).samples), ndarray_copy(deref(ret).log_likelihoods)
+	return ndarray_copy(deref(ret).samples), ndarray_copy(deref(ret).acceptances), ndarray_copy(deref(ret).log_likelihoods)

@@ -9,6 +9,7 @@ std::unique_ptr<SimulateResult> run_pcn_parallel(
 	int n_iter,
 	double beta,
 	const Eigen::Ref<const Eigen::MatrixXd> &theta_0,
+	const Eigen::Ref<const Eigen::VectorXd> &prior_mean,
 	const Eigen::Ref<const Eigen::MatrixXd> &sqrt_prior_cov,
 	const Eigen::Ref<const Eigen::MatrixXd> &interior,
 	const Eigen::Ref<const Eigen::MatrixXd> &sensors,
@@ -36,14 +37,16 @@ std::unique_ptr<SimulateResult> run_pcn_parallel(
 
 	Eigen::MatrixXd ret_samples(theta_0.rows(), theta_0.cols());
 	Eigen::VectorXd ret_likelihoods(theta_0.rows());
+	Eigen::VectorXd acceptances(theta_0.rows());
 	#pragma omp parallel for num_threads(n_threads)
 	for(int i = 0; i < theta_0.rows(); i++) {
 		Eigen::VectorXd sample = theta_0.row(i);
-		auto results = apply_one_kernel_pcn(sample, n_iter, beta, log_likelihood_function, sqrt_prior_cov, false);
+		auto results = apply_one_kernel_pcn(sample, n_iter, beta, log_likelihood_function, prior_mean, sqrt_prior_cov, false);
 
 		ret_samples.row(i) = results->result;
 		ret_likelihoods(i) = results->log_likelihood;
+		acceptances(i) = results->average_acceptance;
 	}
 
-	return make_unique<SimulateResult>(ret_samples, ret_likelihoods);
+	return make_unique<SimulateResult>(ret_samples, acceptances, ret_likelihoods);
 }

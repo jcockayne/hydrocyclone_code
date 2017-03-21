@@ -5,6 +5,14 @@ import mcmc
 import collocate
 import simulate
 
+import contextlib
+
+@contextlib.contextmanager
+def printoptions(*args, **kwargs):
+    original = np.get_printoptions()
+    np.set_printoptions(*args, **kwargs)
+    yield 
+    np.set_printoptions(**original)
 
 def theta_to_a(theta, sz_int, sz_bdy, proposal_dot_mat):
     theta = np.real_if_close(theta)
@@ -94,7 +102,8 @@ def phi(grid, op_system, theta, likelihood_variance, pattern, data, collocate_ar
         residual = voltage.ravel() - model_voltage.ravel()
         this_likelihood = likelihood_dist.logpdf(residual)
         if debug:
-            print("Model|True|Residual\n {}".format(np.c_[model_voltage, voltage, residual]))
+            with printoptions(precision=4, suppress=True):
+                print("Model | True| Residual | Diag(cov)\n {}".format(np.c_[model_voltage, voltage, residual, np.diag(likelihood_cov)]))
             print("Likelihood: {}   |   Residual: {}".format(this_likelihood, np.abs(residual).sum()))
         likelihood += this_likelihood
     return -likelihood
@@ -113,8 +122,9 @@ def phi_c(grid, theta, likelihood_variance, pattern, data, collocate_args, propo
     )
 
 class PCNKernel_C(object):
-    def __init__(self, beta, sqrt_prior_cov, grid, likelihood_variance, pattern, data, collocate_args, proposal_dot_mat):
+    def __init__(self, beta, prior_mean, sqrt_prior_cov, grid, likelihood_variance, pattern, data, collocate_args, proposal_dot_mat):
         self.__beta__ = beta
+        self.__prior_mean__ = prior_mean
         self.__sqrt_prior_cov__ = sqrt_prior_cov   
         self.__grid__ = grid
         self.__likelihood_variance__ = likelihood_variance
@@ -141,6 +151,7 @@ class PCNKernel_C(object):
             n_iter,
             self.__beta__,
             np.asfortranarray(kappa_0),
+            np.asfortranarray(self.__prior_mean__),
             np.asfortranarray(self.__sqrt_prior_cov__),
             np.asfortranarray(self.__grid__.interior_plus_boundary),
             np.asfortranarray(self.__grid__.sensors),
@@ -181,7 +192,7 @@ class PCNKernel(object):
     def apply(self, kappa_0, n_iter, n_threads=1):
         if n_threads > 1:
             raise Exception("Threading not currently supported in the python kernel.")
-        
+
         if len(kappa_0.shape) == 1 or kappa_0.shape[1] == 1:
             return mcmc.pCN(n_iter, self.__proposal__, self.phi, kappa_0)
 
@@ -193,4 +204,4 @@ class PCNKernel(object):
             results, accepts = self.apply(kappa_0[i], n_iter)
             ret[i] = results[-1,:]
             acceptances[i] = accepts.mean()
-        return ret, acceptances
+        return ret, acceptances, None
