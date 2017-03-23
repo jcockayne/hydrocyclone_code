@@ -25,7 +25,8 @@ cdef extern from "likelihood.hpp":
 		Map[MatrixXd] stim_pattern,
 		Map[MatrixXd] meas_pattern,
 		Map[MatrixXd] data,
-		double likelihood_variance
+		double likelihood_variance,
+		bint debug
 	)
 
 def collocate_no_obs(
@@ -53,7 +54,8 @@ def log_likelihood(
 	np.ndarray[dtype=np.float_t, ndim=2] stim_pattern,
 	np.ndarray[dtype=np.float_t, ndim=2] meas_pattern,
 	np.ndarray[dtype=np.float_t, ndim=2] data,
-	double likelihood_variance
+	double likelihood_variance,
+	bint debug
 ):
 	return _log_likelihood(
 		Map[MatrixXd](interior),
@@ -64,5 +66,6 @@ def log_likelihood(
 		Map[MatrixXd](stim_pattern),
 		Map[MatrixXd](meas_pattern),
 		Map[MatrixXd](data),
-		likelihood_variance
+		likelihood_variance,
+		debug
 	)

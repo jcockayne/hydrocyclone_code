@@ -108,7 +108,7 @@ def phi(grid, op_system, theta, likelihood_variance, pattern, data, collocate_ar
         likelihood += this_likelihood
     return -likelihood
 
-def phi_c(grid, theta, likelihood_variance, pattern, data, collocate_args, proposal_dot_mat):
+def phi_c(grid, theta, likelihood_variance, pattern, data, collocate_args, proposal_dot_mat, debug=False):
     return -collocate.log_likelihood(
         np.asfortranarray(grid.interior_plus_boundary),
         np.asfortranarray(grid.sensors),
@@ -118,7 +118,8 @@ def phi_c(grid, theta, likelihood_variance, pattern, data, collocate_args, propo
         np.asfortranarray(pattern.stim_pattern),
         np.asfortranarray(pattern.meas_pattern),
         np.asfortranarray(data),
-        likelihood_variance
+        likelihood_variance,
+        debug
     )
 
 class PCNKernel_C(object):
@@ -141,6 +142,15 @@ class PCNKernel_C(object):
             self.__pattern__,
             self.__data__,
             self.__collocate_args__,
+            self.__proposal_dot_mat__
+        )
+
+    def get_posterior(self, theta, locations):
+        return construct_c_posterior(
+            locations, 
+            self.__grid__, 
+            theta, 
+            self.__collocate_args__, 
             self.__proposal_dot_mat__
         )
 

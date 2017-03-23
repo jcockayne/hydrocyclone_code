@@ -10,7 +10,8 @@ double log_likelihood(
 	const Eigen::Ref<const Eigen::MatrixXd> &stim_pattern,
 	const Eigen::Ref<const Eigen::MatrixXd> &meas_pattern,
 	const Eigen::Ref<const Eigen::MatrixXd> &data,
-	double likelihood_variance
+	double likelihood_variance,
+	bool debug = false
 );
 
 #define LIKELIHOOD_H

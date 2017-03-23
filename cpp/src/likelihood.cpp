@@ -13,7 +13,8 @@ double log_likelihood(
 	const Eigen::Ref<const Eigen::MatrixXd> &stim_pattern,
 	const Eigen::Ref<const Eigen::MatrixXd> &meas_pattern,
 	const Eigen::Ref<const Eigen::MatrixXd> &data,
-	double likelihood_variance
+	double likelihood_variance,
+	bool debug
 )
 {
 	Eigen::VectorXd projected_theta = theta_projection_mat*theta;
@@ -44,7 +45,17 @@ double log_likelihood(
 	*/
 
 	auto likelihood_cov_decomp = likelihood_cov.llt();
-	double log_norm_const = 0.5*(data.cols()*log(2*M_PI) + log(likelihood_cov_decomp.matrixL().determinant()));
+	Eigen::MatrixXd L = likelihood_cov_decomp.matrixL();
+	double logdet = 0;
+	for(int i = 0; i < L.rows(); i++)
+		logdet += log(L(i,i));
+	logdet*=2;
+	double log_norm_const = -0.5*data.cols()*log(2*M_PI) - 0.5*logdet;
+
+	#ifdef WITH_DEBUG
+	if(debug)
+		std::cout << log_norm_const << std::endl;
+	#endif
 
 	double likelihood = 0;
 	Eigen::MatrixXd left_model_mult = meas_pattern * posterior->mu_mult;
@@ -52,8 +63,12 @@ double log_likelihood(
 		rhs.bottomRows(stim_pattern.cols()) = stim_pattern.row(i).transpose();
 		Eigen::VectorXd residual = left_model_mult*rhs - data.row(i).transpose();
 
-		double this_likelihood = -0.5*residual.dot(likelihood_cov_decomp.solve(residual)) - log_norm_const;
+		double this_likelihood = -0.5*residual.dot(likelihood_cov_decomp.solve(residual)) + log_norm_const;
 		likelihood += this_likelihood;
+		#ifdef WITH_DEBUG
+		if(debug)
+			std::cout << this_likelihood << std::endl;
+		#endif
 		/*
 		{
 			std::cout << "MODEL | TRUE | RESIDUAL: " << std::endl;
