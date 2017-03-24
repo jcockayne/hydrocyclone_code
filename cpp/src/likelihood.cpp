@@ -14,7 +14,8 @@ double log_likelihood(
 	const Eigen::Ref<const Eigen::MatrixXd> &meas_pattern,
 	const Eigen::Ref<const Eigen::MatrixXd> &data,
 	double likelihood_variance,
-	bool debug
+	bool debug,
+	Collocator *collocator
 )
 {
 	Eigen::VectorXd projected_theta = theta_projection_mat*theta;
@@ -29,8 +30,11 @@ double log_likelihood(
 	Eigen::MatrixXd augmented_sens(sensors.rows(), 5);
 	augmented_sens << sensors, theta_sens;
 	
-
-	auto posterior = collocate_no_obs(augmented_sens, augmented_int, augmented_sens, kernel_args);
+	std::unique_ptr<CollocationResult> posterior;
+	if(collocator != NULL)
+		posterior = collocator->collocate_no_obs(augmented_sens, augmented_int, augmented_sens, kernel_args);
+	else
+		posterior = collocate_no_obs(augmented_sens, augmented_int, augmented_sens, kernel_args);
 
 	Eigen::VectorXd rhs = Eigen::VectorXd::Zero(posterior->mu_mult.cols());
 

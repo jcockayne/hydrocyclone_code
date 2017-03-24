@@ -1,12 +1,16 @@
 #ifndef SIMULATE_H
+#include <vector>
+#include <memory>
 
 struct SimulateResult {
 	const Eigen::MatrixXd samples;
 	const Eigen::VectorXd acceptances;
 	const Eigen::VectorXd log_likelihoods;
+	std::vector<std::unique_ptr<Eigen::MatrixXd>> sample_paths;
 
-	SimulateResult(const Eigen::MatrixXd samples, const Eigen::VectorXd acceptances, const Eigen::VectorXd log_likelihoods) 
-		: samples(samples), acceptances(acceptances), log_likelihoods(log_likelihoods) { }
+	SimulateResult(const Eigen::MatrixXd samples, const Eigen::VectorXd acceptances, const Eigen::VectorXd log_likelihoods, 
+		std::vector<std::unique_ptr<Eigen::MatrixXd>> sample_paths) 
+		: samples(samples), acceptances(acceptances), log_likelihoods(log_likelihoods), sample_paths(std::move(sample_paths)) { }
 };
 
 std::unique_ptr<SimulateResult> run_pcn_parallel(
@@ -23,7 +27,8 @@ std::unique_ptr<SimulateResult> run_pcn_parallel(
 	const Eigen::Ref<const Eigen::MatrixXd> &meas_pattern,
 	const Eigen::Ref<const Eigen::MatrixXd> &data,
 	double likelihood_variance,
-	int n_threads
+	int n_threads,
+	bool return_samples
 );
 
 #endif

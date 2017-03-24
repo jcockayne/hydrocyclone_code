@@ -3,12 +3,14 @@ cimport numpy as np
 import numpy as np
 from cython.operator cimport dereference as deref
 from libcpp.memory cimport unique_ptr
+from libcpp.vector cimport vector
 
 cdef extern from "simulate.hpp":
 	cdef cppclass SimulateResult:
 		MatrixXd samples
 		VectorXd acceptances
 		VectorXd log_likelihoods
+		vector[unique_ptr[MatrixXd]] sample_paths
 	cdef unique_ptr[SimulateResult] _run_pcn_parallel "run_pcn_parallel"(
 		int n_iter,
 		double beta,
@@ -23,7 +25,8 @@ cdef extern from "simulate.hpp":
 		Map[MatrixXd] meas_pattern,
 		Map[MatrixXd] data,
 		double likelihood_variance,
-		int n_threads
+		int n_threads,
+		bint return_samples
 	)
 
 def run_pcn_parallel(
@@ -42,6 +45,7 @@ def run_pcn_parallel(
 	double likelihood_variance,
 	int n_threads
 ):
+	cdef bint return_samples = theta_0.shape[0] == 1
 	ret = _run_pcn_parallel(
 		n_iter,
 		beta,
@@ -56,7 +60,13 @@ def run_pcn_parallel(
 		Map[MatrixXd](meas_pattern),
 		Map[MatrixXd](data),
 		likelihood_variance,
-		n_threads
+		n_threads,
+		return_samples
 	)
 
-	return ndarray_copy(deref(ret).samples), ndarray_copy(deref(ret).acceptances), ndarray_copy(deref(ret).log_likelihoods)
+	if(return_samples):
+		ret_samples = ndarray_copy(deref(deref(ret).sample_paths.at(0).get()))
+	else:
+		ret_samples = ndarray_copy(deref(ret).samples)
+
+	return ret_samples, ndarray_copy(deref(ret).acceptances), ndarray_copy(deref(ret).log_likelihoods)

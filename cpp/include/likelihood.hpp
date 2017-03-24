@@ -1,4 +1,5 @@
 #include <Eigen/Core>
+#include "collocate.hpp"
 #ifndef LIKELIHOOD_H
 
 double log_likelihood(
@@ -11,7 +12,8 @@ double log_likelihood(
 	const Eigen::Ref<const Eigen::MatrixXd> &meas_pattern,
 	const Eigen::Ref<const Eigen::MatrixXd> &data,
 	double likelihood_variance,
-	bool debug = false
+	bool debug = false,
+	Collocator *collocator = NULL
 );
 
 #define LIKELIHOOD_H

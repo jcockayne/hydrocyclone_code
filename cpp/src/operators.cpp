@@ -16,16 +16,10 @@ void Id_Id(const Eigen::Ref<const Eigen::MatrixXd> &xarg, const Eigen::Ref<const
     for(int i = 0; i < xarg.rows(); i++) {
         double x = xarg(i, 0);
         double y = xarg(i, 1);
-        double a = xarg(i, 2);
-        double a_x = xarg(i, 3);
-        double a_y = xarg(i, 4);
 
         for(int j = 0; j < yarg.rows(); j++) {
             double xbar = yarg(j, 0);
             double ybar = yarg(j, 1);
-            double abar = yarg(j, 2);
-            double a_xbar = yarg(j, 3);
-            double a_ybar = yarg(j, 4);
 
             double dx = x-xbar;
             double dy = y-ybar;
