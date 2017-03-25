@@ -1,8 +1,36 @@
 #include <Eigen/Dense>
 #include <math.h>
 #include "collocate.hpp"
+#include "likelihood.hpp"
 #include <iostream>
 #include <fstream>
+double log_likelihood(
+	const Eigen::Ref<const Eigen::MatrixXd> &interior,
+	const Eigen::Ref<const Eigen::MatrixXd> &sensors,
+	const Eigen::Ref<const Eigen::VectorXd> &theta,
+	const Eigen::Ref<const Eigen::MatrixXd> &theta_projection_mat,
+	const Eigen::Ref<const Eigen::VectorXd> &kernel_args,
+	const Eigen::Ref<const Eigen::MatrixXd> &stim_pattern,
+	const Eigen::Ref<const Eigen::MatrixXd> &meas_pattern,
+	const Eigen::Ref<const Eigen::MatrixXd> &data,
+	double likelihood_variance,
+	bool debug
+)
+{
+	return log_likelihood(
+		interior,
+		sensors,
+		theta,
+		theta_projection_mat,
+		kernel_args,
+		stim_pattern,
+		meas_pattern,
+		data,
+		likelihood_variance,
+		NULL,
+		debug
+	);
+}
 
 double log_likelihood(
 	const Eigen::Ref<const Eigen::MatrixXd> &interior,
@@ -14,8 +42,73 @@ double log_likelihood(
 	const Eigen::Ref<const Eigen::MatrixXd> &meas_pattern,
 	const Eigen::Ref<const Eigen::MatrixXd> &data,
 	double likelihood_variance,
-	bool debug,
-	Collocator *collocator
+	Collocator *collocator,
+	bool debug
+)
+{
+	return log_likelihood_tempered(
+		interior,
+		sensors,
+		theta,
+		theta_projection_mat,
+		kernel_args,
+		stim_pattern,
+		meas_pattern,
+		data,
+		Eigen::MatrixXd(0, 0),
+		0.,
+		likelihood_variance,
+		collocator,
+		debug
+	);
+}
+
+double log_likelihood_tempered(
+	const Eigen::Ref<const Eigen::MatrixXd> &interior,
+	const Eigen::Ref<const Eigen::MatrixXd> &sensors,
+	const Eigen::Ref<const Eigen::VectorXd> &theta,
+	const Eigen::Ref<const Eigen::MatrixXd> &theta_projection_mat,
+	const Eigen::Ref<const Eigen::VectorXd> &kernel_args,
+	const Eigen::Ref<const Eigen::MatrixXd> &stim_pattern,
+	const Eigen::Ref<const Eigen::MatrixXd> &meas_pattern,
+	const Eigen::Ref<const Eigen::MatrixXd> &data_1,
+	const Eigen::Ref<const Eigen::MatrixXd> &data_2,
+	double temperature,
+	double likelihood_variance,
+	bool debug
+)
+{
+	return log_likelihood_tempered(
+		interior,
+		sensors,
+		theta,
+		theta_projection_mat,
+		kernel_args,
+		stim_pattern,
+		meas_pattern,
+		data_1,
+		data_2,
+		temperature,
+		likelihood_variance,
+		NULL,
+		debug
+	);
+}
+
+double log_likelihood_tempered(
+	const Eigen::Ref<const Eigen::MatrixXd> &interior,
+	const Eigen::Ref<const Eigen::MatrixXd> &sensors,
+	const Eigen::Ref<const Eigen::VectorXd> &theta,
+	const Eigen::Ref<const Eigen::MatrixXd> &theta_projection_mat,
+	const Eigen::Ref<const Eigen::VectorXd> &kernel_args,
+	const Eigen::Ref<const Eigen::MatrixXd> &stim_pattern,
+	const Eigen::Ref<const Eigen::MatrixXd> &meas_pattern,
+	const Eigen::Ref<const Eigen::MatrixXd> &data_1,
+	const Eigen::Ref<const Eigen::MatrixXd> &data_2,
+	double temperature,
+	double likelihood_variance,
+	Collocator *collocator,
+	bool debug
 )
 {
 	Eigen::VectorXd projected_theta = theta_projection_mat*theta;
@@ -50,39 +143,49 @@ double log_likelihood(
 
 	auto likelihood_cov_decomp = likelihood_cov.llt();
 	Eigen::MatrixXd L = likelihood_cov_decomp.matrixL();
-	double logdet = 0;
+	double halflogdet = 0;
 	for(int i = 0; i < L.rows(); i++)
-		logdet += log(L(i,i));
-	logdet*=2;
-	double log_norm_const = -0.5*data.cols()*log(2*M_PI) - 0.5*logdet;
+		halflogdet += log(L(i,i));
+	double halflog2pi = 0.5*log(2*M_PI);
+	// NB ASSUMES THAT data_1 AND data_2 HAVE THE SAME ROWS!
+	double log_norm_const = -halflog2pi*data_1.cols() - halflogdet;
 
 	#ifdef WITH_DEBUG
 	if(debug)
 		std::cout << log_norm_const << std::endl;
 	#endif
 
-	double likelihood = 0;
 	Eigen::MatrixXd left_model_mult = meas_pattern * posterior->mu_mult;
-	for(int i = 0; i < data.rows(); i++) {
-		rhs.bottomRows(stim_pattern.cols()) = stim_pattern.row(i).transpose();
-		Eigen::VectorXd residual = left_model_mult*rhs - data.row(i).transpose();
+	double likelihood_1 = 0;
+	double likelihood_2 = 0;
+	if(temperature < 1 && data_1.rows() > 0) {
+		for(int i = 0; i < data_1.rows(); i++) {
+			rhs.bottomRows(stim_pattern.cols()) = stim_pattern.row(i).transpose();
+			Eigen::VectorXd residual = left_model_mult*rhs - data_1.row(i).transpose();
 
-		double this_likelihood = -0.5*residual.dot(likelihood_cov_decomp.solve(residual)) + log_norm_const;
-		likelihood += this_likelihood;
-		#ifdef WITH_DEBUG
-		if(debug)
-			std::cout << this_likelihood << std::endl;
-		#endif
-		/*
-		{
-			std::cout << "MODEL | TRUE | RESIDUAL: " << std::endl;
-			Eigen::MatrixXd tmp(residual.rows(), 3);
-			tmp << left_model_mult*rhs, data.row(i).transpose(), residual;
-			std::cout << tmp << std::endl;
-			std::cout << "LIKELIHOOD: " << this_likelihood << std::endl;
+			double this_likelihood = -0.5*residual.dot(likelihood_cov_decomp.solve(residual)) + log_norm_const;
+			likelihood_1 += this_likelihood;
+			#ifdef WITH_DEBUG
+			if(debug)
+				std::cout << this_likelihood << std::endl;
+			#endif
 		}
-		*/
 	}
 
-	return likelihood;
+
+	log_norm_const = -halflog2pi*data_2.cols() - halflogdet;
+	if(temperature > 0 && data_2.rows() > 0) {
+		for(int i = 0; i < data_2.rows(); i++) {
+			rhs.bottomRows(stim_pattern.cols()) = stim_pattern.row(i).transpose();
+			Eigen::VectorXd residual = left_model_mult*rhs - data_2.row(i).transpose();
+
+			double this_likelihood = -0.5*residual.dot(likelihood_cov_decomp.solve(residual)) + log_norm_const;
+			likelihood_2 += this_likelihood;
+			#ifdef WITH_DEBUG
+			if(debug)
+				std::cout << this_likelihood << std::endl;
+			#endif
+		}
+	}
+	return likelihood_1*(1-temperature) + likelihood_2*temperature;
 }

@@ -121,6 +121,21 @@ def phi_c(grid, theta, likelihood_variance, pattern, data, collocate_args, propo
         likelihood_variance,
         debug
     )
+def phi_c_tempered(grid, theta, likelihood_variance, pattern, data_1, data_2, temp, collocate_args, proposal_dot_mat, debug=False):
+    return -collocate.log_likelihood_tempered(
+        np.asfortranarray(grid.interior_plus_boundary),
+        np.asfortranarray(grid.sensors),
+        np.asfortranarray(theta),
+        np.asfortranarray(proposal_dot_mat),
+        np.asfortranarray(collocate_args),
+        np.asfortranarray(pattern.stim_pattern),
+        np.asfortranarray(pattern.meas_pattern),
+        np.asfortranarray(data_1),
+        np.asfortranarray(data_2),
+        temp,
+        likelihood_variance,
+        debug
+    )
 
 class PCNKernel_C(object):
     def __init__(self, beta, prior_mean, sqrt_prior_cov, grid, likelihood_variance, pattern, data, collocate_args, proposal_dot_mat):
@@ -154,12 +169,12 @@ class PCNKernel_C(object):
             self.__proposal_dot_mat__
         )
 
-    def apply(self, kappa_0, n_iter, n_threads=1):
+    def apply(self, kappa_0, n_iter, n_threads=1, beta=None):
         if len(kappa_0.shape) == 1:
             kappa_0 = np.copy(kappa_0[None, :])
         return simulate.run_pcn_parallel(
             n_iter,
-            self.__beta__,
+            self.__beta__ if beta is None else beta,
             np.asfortranarray(kappa_0),
             np.asfortranarray(self.__prior_mean__),
             np.asfortranarray(self.__sqrt_prior_cov__),
@@ -174,6 +189,63 @@ class PCNKernel_C(object):
             n_threads
         )
 
+class PCNTemperingKernel_C(object):
+    def __init__(self, beta, prior_mean, sqrt_prior_cov, grid, likelihood_variance, pattern, data_1, data_2, temp, collocate_args, proposal_dot_mat):
+        self.__beta__ = beta
+        self.__prior_mean__ = prior_mean
+        self.__sqrt_prior_cov__ = sqrt_prior_cov   
+        self.__grid__ = grid
+        self.__likelihood_variance__ = likelihood_variance
+        self.__pattern__ = pattern
+        self.__data_1__ = data_1
+        self.__data_2__ = data_2
+        self.__temp__ = temp
+        self.__collocate_args__ = collocate_args
+        self.__proposal_dot_mat__ = proposal_dot_mat
+
+    def phi(self, theta, debug=False):
+        return phi_c_tempered(
+            self.__grid__,
+            theta,
+            self.__likelihood_variance__,
+            self.__pattern__,
+            self.__data_1__,
+            self.__data_2__,
+            self.__temp__,
+            self.__collocate_args__,
+            self.__proposal_dot_mat__
+        )
+
+    def get_posterior(self, theta, locations):
+        return construct_c_posterior(
+            locations, 
+            self.__grid__, 
+            theta, 
+            self.__collocate_args__, 
+            self.__proposal_dot_mat__
+        )
+
+    def apply(self, kappa_0, n_iter, n_threads=1, beta=None):
+        if len(kappa_0.shape) == 1:
+            kappa_0 = np.copy(kappa_0[None, :])
+        return simulate.run_pcn_parallel_tempered(
+            n_iter,
+            self.__beta__ if beta is None else beta,
+            np.asfortranarray(kappa_0),
+            np.asfortranarray(self.__prior_mean__),
+            np.asfortranarray(self.__sqrt_prior_cov__),
+            np.asfortranarray(self.__grid__.interior_plus_boundary),
+            np.asfortranarray(self.__grid__.sensors),
+            np.asfortranarray(self.__proposal_dot_mat__),
+            np.asfortranarray(self.__collocate_args__),
+            np.asfortranarray(self.__pattern__.stim_pattern),
+            np.asfortranarray(self.__pattern__.meas_pattern),
+            np.asfortranarray(self.__data_1__),
+            np.asfortranarray(self.__data_2__),
+            self.__temp__,
+            self.__likelihood_variance__,
+            n_threads
+        )
 
 class PCNKernel(object):
     def __init__(self, proposal, grid, op_system, likelihood_variance, pattern, data, collocate_args, proposal_dot_mat):

@@ -28,6 +28,20 @@ cdef extern from "likelihood.hpp":
 		double likelihood_variance,
 		bint debug
 	)
+	cdef double _log_likelihood_tempered "log_likelihood_tempered"(
+		Map[MatrixXd] interior,
+		Map[MatrixXd] sensors,
+		Map[VectorXd] theta,
+		Map[MatrixXd] theta_projection_mat,
+		Map[VectorXd] kernel_args,
+		Map[MatrixXd] stim_pattern,
+		Map[MatrixXd] meas_pattern,
+		Map[MatrixXd] data_1,
+		Map[MatrixXd] data_2,
+		double temp,
+		double likelihood_variance,
+		bint debug
+	)
 
 def collocate_no_obs(
 	np.ndarray[dtype=np.float_t, ndim=2] x,
@@ -66,6 +80,36 @@ def log_likelihood(
 		Map[MatrixXd](stim_pattern),
 		Map[MatrixXd](meas_pattern),
 		Map[MatrixXd](data),
+		likelihood_variance,
+		debug
+	)
+
+
+def log_likelihood_tempered(
+	np.ndarray[dtype=np.float_t, ndim=2] interior,
+	np.ndarray[dtype=np.float_t, ndim=2] sensors,
+	np.ndarray[dtype=np.float_t, ndim=1] theta,
+	np.ndarray[dtype=np.float_t, ndim=2] theta_projection_mat,
+	np.ndarray[dtype=np.float_t, ndim=1] kernel_args,
+	np.ndarray[dtype=np.float_t, ndim=2] stim_pattern,
+	np.ndarray[dtype=np.float_t, ndim=2] meas_pattern,
+	np.ndarray[dtype=np.float_t, ndim=2] data_1,
+	np.ndarray[dtype=np.float_t, ndim=2] data_2,
+	double temp,
+	double likelihood_variance,
+	bint debug
+):
+	return _log_likelihood_tempered(
+		Map[MatrixXd](interior),
+		Map[MatrixXd](sensors),
+		Map[VectorXd](theta),
+		Map[MatrixXd](theta_projection_mat),
+		Map[VectorXd](kernel_args),
+		Map[MatrixXd](stim_pattern),
+		Map[MatrixXd](meas_pattern),
+		Map[MatrixXd](data_1),
+		Map[MatrixXd](data_2),
+		temp,
 		likelihood_variance,
 		debug
 	)
