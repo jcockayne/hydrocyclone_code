@@ -1,9 +1,0 @@
-setup.py
-hydrocyclone/__init__.py
-hydrocyclone/grids.py
-hydrocyclone/helpers.py
-hydrocyclone/pcn_kernel.py
-hydrocyclone.egg-info/PKG-INFO
-hydrocyclone.egg-info/SOURCES.txt
-hydrocyclone.egg-info/dependency_links.txt
-hydrocyclone.egg-info/top_level.txt
