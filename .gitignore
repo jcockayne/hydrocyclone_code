@@ -1,0 +1,11 @@
+.ipynb_checkpoints
+*.pyc
+python/build
+cpp/build
+cpp/lib
+*.so
+python/hydrocyclone.egg-info
+python/**/*.cpp
+.DS_STORE
+notebooks/results
+notebooks/figures
