@@ -13,6 +13,7 @@ Reproducing the experiments will require that the following standard python libr
 - `matplotlib`
 - `sympy`
 - `jupyter`
+- `pandas`
 
 In addition, the python libraries contained in the following git repositories must be installed:
 
