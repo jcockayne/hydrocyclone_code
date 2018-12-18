@@ -1,6 +1,6 @@
 # Bayesian Probabilistic Numerical Methods in Time-Dependent State Estimation for Industrial Hydrocyclone Equipment
 
-This repository contains the code for the paper **Bayesian Probabilistic Numerical Methods in Time-Dependent State Estimation for Industrial Hydrocyclone Equipment** (Chris J. Oates, Jon Cockayne, Robert G. Ackroyd, Mark Girolami) [\[`arXiv`\]](https://arxiv.org/abs/1707.06107).
+This repository contains the code for the paper **Bayesian Probabilistic Numerical Methods in Time-Dependent State Estimation for Industrial Hydrocyclone Equipment** (Chris J. Oates, Jon Cockayne, Robert G. Aykroyd, Mark Girolami) [\[`arXiv`\]](https://arxiv.org/abs/1707.06107).
 
 ## Dependencies
 
