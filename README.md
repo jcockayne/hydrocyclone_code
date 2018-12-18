@@ -48,3 +48,6 @@ The remaining notebooks are for results processing.
 - **Hydrocyclone_Results_Temporal_PCs** plots the posterior in principle component directions as of the final time point.
 - **Hydrocyclone_Results_Temporal_Variance** shows the change in the integrated standard deviation at the final time point as a function of the number of design points.
 
+## Acknowledgements
+
+The collection of the real tomographic data was supported by an EPSRC research grant (GR/R22148/01).
