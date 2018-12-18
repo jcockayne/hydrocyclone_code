@@ -18,7 +18,7 @@ Reproducing the experiments will require that the following standard python libr
 In addition, the python libraries contained in the following git repositories must be installed:
 
 - [`bayesian_pdes`](https://github.com/jcockayne/bayesian_pdes)
-- [`eit`](https://github.com/jcockayne/eit)
+- [`bayesian_eit`](https://github.com/jcockayne/bayesian_eit)
 
 ## Code Structure
 
