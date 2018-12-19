@@ -50,9 +50,10 @@ The remaining notebooks are for results processing.
 
 ### Expected Run Times
 
-The predominant cost is in the two notebooks that perform simulations - the result generation notebooks incur a negligible cost.
-The run times are highly dependent on the parameters used. 
-For a representative parameter set used in the paper, generating results from Hydrocyclone_Static_EIT required around 15 hours of compute time on a reasonably high-end Macbook Pro, while Hydrocyclone_Temporal_Recovery required around 26 hours of compute time.
+The predominant factor in the run times is associated with the two notebooks that perform simulations (the result generation notebooks incur a negligible cost).
+These run times are dependent on the input parameters to the code and the hardware being used. 
+For the timings reported here, a reasonably high-end Macbook Pro laptop was used.
+For a representative parameter set used in the paper, one complete run of Hydrocyclone_Static_EIT requires around 15 hours of compute time in total, while one complete run of Hydrocyclone_Temporal_Recovery requires around 26 hours of compute time in total.
 
 ## Acknowledgements
 
