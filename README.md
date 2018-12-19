@@ -48,6 +48,12 @@ The remaining notebooks are for results processing.
 - **Hydrocyclone_Results_Temporal_PCs** plots the posterior in principle component directions as of the final time point.
 - **Hydrocyclone_Results_Temporal_Variance** shows the change in the integrated standard deviation at the final time point as a function of the number of design points.
 
+### Expected Run Times
+
+The predominant cost is in the two notebooks that perform simulations - the result generation notebooks incur a negligible cost.
+The run times are highly dependent on the parameters used. 
+For a representative parameter set used in the paper, generating results from Hydrocyclone_Static_EIT required around 15 hours of compute time on a reasonably high-end Macbook Pro, while Hydrocyclone_Temporal_Recovery required around 26 hours of compute time.
+
 ## Acknowledgements
 
 The collection of the real tomographic data was supported by an EPSRC research grant (GR/R22148/01).
